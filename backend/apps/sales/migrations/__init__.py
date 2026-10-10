@@ -1,0 +1,1 @@
+"""Django migrations for the sales app."""

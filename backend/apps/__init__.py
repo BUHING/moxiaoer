@@ -1,0 +1,1 @@
+"""GrindBuddy Django applications."""

@@ -1,0 +1,43 @@
+from django.urls import path
+
+from .views import (
+    AttributeOptionDetailView,
+    AttributeOptionListCreateView,
+    PriceLevelDeactivateView,
+    PriceLevelDetailView,
+    PriceLevelListCreateView,
+    ProductAttributeDeactivateView,
+    ProductAttributeDetailView,
+    ProductAttributeListCreateView,
+    ProductDeactivateView,
+    ProductDetailView,
+    ProductListCreateView,
+    ProductPriceListView,
+    SpecificationDeactivateView,
+    SpecificationDetailView,
+    SpecificationListCreateView,
+    UnitDeactivateView,
+    UnitDetailView,
+    UnitListCreateView,
+)
+
+urlpatterns = [
+    path("products/", ProductListCreateView.as_view(), name="product-list"),
+    path("products/<uuid:product_id>/prices/", ProductPriceListView.as_view(), name="product-price-list"),
+    path("products/<uuid:product_id>/", ProductDetailView.as_view(), name="product-detail"),
+    path("products/<uuid:resource_id>/deactivate/", ProductDeactivateView.as_view(), name="product-deactivate"),
+    path("units/", UnitListCreateView.as_view(), name="unit-list"),
+    path("units/<uuid:resource_id>/", UnitDetailView.as_view(), name="unit-detail"),
+    path("units/<uuid:resource_id>/deactivate/", UnitDeactivateView.as_view(), name="unit-deactivate"),
+    path("specifications/", SpecificationListCreateView.as_view(), name="specification-list"),
+    path("specifications/<uuid:resource_id>/", SpecificationDetailView.as_view(), name="specification-detail"),
+    path("specifications/<uuid:resource_id>/deactivate/", SpecificationDeactivateView.as_view(), name="specification-deactivate"),
+    path("product-attributes/", ProductAttributeListCreateView.as_view(), name="product-attribute-list"),
+    path("product-attributes/<uuid:resource_id>/", ProductAttributeDetailView.as_view(), name="product-attribute-detail"),
+    path("product-attributes/<uuid:resource_id>/deactivate/", ProductAttributeDeactivateView.as_view(), name="product-attribute-deactivate"),
+    path("product-attributes/<uuid:attribute_id>/options/", AttributeOptionListCreateView.as_view(), name="attribute-option-list"),
+    path("product-attributes/<uuid:attribute_id>/options/<uuid:option_id>/", AttributeOptionDetailView.as_view(), name="attribute-option-detail"),
+    path("price-levels/", PriceLevelListCreateView.as_view(), name="price-level-list"),
+    path("price-levels/<uuid:resource_id>/", PriceLevelDetailView.as_view(), name="price-level-detail"),
+    path("price-levels/<uuid:resource_id>/deactivate/", PriceLevelDeactivateView.as_view(), name="price-level-deactivate"),
+]

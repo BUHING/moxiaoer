@@ -1,0 +1,1 @@
+"""Customer, supplier, and price level boundaries."""

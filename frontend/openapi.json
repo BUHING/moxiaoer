@@ -1,0 +1,4796 @@
+openapi: 3.0.3
+info:
+  title: GrindBuddy API
+  version: v1
+  description: GrindBuddy REST API contract.
+paths:
+  /api/schema/:
+    get:
+      operationId: schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - ckb
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - ht
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - ms
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - ug
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - schema
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/:
+    get:
+      operationId: v1_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiRootResponse'
+          description: ''
+  /api/v1/auth/me/:
+    get:
+      operationId: v1_auth_me_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+          description: ''
+  /api/v1/auth/register/:
+    post:
+      operationId: v1_auth_register_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Register'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Register'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+          description: ''
+  /api/v1/auth/token/:
+    post:
+      operationId: v1_auth_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenLogin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenLogin'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+          description: ''
+  /api/v1/auth/token/refresh/:
+    post:
+      operationId: v1_auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshInput'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshInput'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshInput'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+          description: ''
+  /api/v1/customers/:
+    get:
+      operationId: customers_list
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerListResponse'
+          description: ''
+    post:
+      operationId: customers_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomerWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomerWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+          description: ''
+  /api/v1/customers/{customer_id}/:
+    get:
+      operationId: customers_retrieve
+      parameters:
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+          description: ''
+    patch:
+      operationId: customers_partial_update
+      parameters:
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomerWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomerWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomerWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+          description: ''
+    delete:
+      operationId: customers_destroy
+      parameters:
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/customers/{customer_id}/deactivate/:
+    post:
+      operationId: customers_deactivate
+      parameters:
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerDeactivationResponse'
+          description: ''
+  /api/v1/dashboard/:
+    get:
+      operationId: dashboard_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+          description: ''
+  /api/v1/employees/:
+    get:
+      operationId: employees_list
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeListResponse'
+          description: ''
+    post:
+      operationId: employees_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+          description: ''
+  /api/v1/employees/{user_id}/:
+    get:
+      operationId: employees_retrieve
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+          description: ''
+    patch:
+      operationId: employees_partial_update
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+          description: ''
+  /api/v1/health/:
+    get:
+      operationId: v1_health_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+          description: ''
+  /api/v1/inventory/balances/:
+    get:
+      operationId: inventory_balances_list
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: product_id
+        schema:
+          type: string
+      - in: query
+        name: search
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockBalanceListResponse'
+          description: ''
+  /api/v1/inventory/movements/:
+    get:
+      operationId: inventory_movements_list
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+      - in: query
+        name: date_to
+        schema:
+          type: string
+      - in: query
+        name: movement_type
+        schema:
+          type: string
+          enum:
+          - INITIAL
+          - PURCHASE
+          - PURCHASE_RETURN
+          - SALE
+          - SALE_RETURN
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: product_id
+        schema:
+          type: string
+      - in: query
+        name: search
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementListResponse'
+          description: ''
+  /api/v1/label-templates/:
+    get:
+      operationId: label_templates_list
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelTemplateListResponse'
+          description: ''
+    post:
+      operationId: label_templates_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelTemplateWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LabelTemplateWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LabelTemplateWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelTemplateResponse'
+          description: ''
+  /api/v1/label-templates/{template_id}/:
+    get:
+      operationId: label_templates_retrieve
+      parameters:
+      - in: path
+        name: template_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelTemplateResponse'
+          description: ''
+    patch:
+      operationId: label_templates_partial_update
+      parameters:
+      - in: path
+        name: template_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLabelTemplateWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLabelTemplateWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLabelTemplateWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelTemplateResponse'
+          description: ''
+  /api/v1/permission-requests/:
+    get:
+      operationId: permission_requests_list
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionRequestListResponse'
+          description: ''
+    post:
+      operationId: permission_requests_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionRequestCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PermissionRequestCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PermissionRequestCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionRequestResponse'
+          description: ''
+  /api/v1/permission-requests/{request_id}/approve/:
+    post:
+      operationId: v1_permission_requests_approve_create
+      parameters:
+      - in: path
+        name: request_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionRequestResponse'
+          description: ''
+  /api/v1/permission-requests/{request_id}/reject/:
+    post:
+      operationId: v1_permission_requests_reject_create
+      parameters:
+      - in: path
+        name: request_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionRequestResponse'
+          description: ''
+  /api/v1/price-levels/:
+    get:
+      operationId: price_levels_list
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceLevelListResponse'
+          description: ''
+    post:
+      operationId: price_levels_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceLevelWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PriceLevelWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PriceLevelWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceLevelResponse'
+          description: ''
+  /api/v1/price-levels/{resource_id}/:
+    get:
+      operationId: price_levels_retrieve
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceLevelResponse'
+          description: ''
+    patch:
+      operationId: price_levels_partial_update
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPriceLevelWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPriceLevelWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPriceLevelWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceLevelResponse'
+          description: ''
+    delete:
+      operationId: price_levels_destroy
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/price-levels/{resource_id}/deactivate/:
+    post:
+      operationId: v1_price_levels_deactivate_create
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeactivationResponse'
+          description: ''
+  /api/v1/product-attributes/:
+    get:
+      operationId: product_attributes_list
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductAttributeListResponse'
+          description: ''
+    post:
+      operationId: product_attributes_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductAttributeWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductAttributeWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductAttributeWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductAttributeResponse'
+          description: ''
+  /api/v1/product-attributes/{attribute_id}/options/:
+    get:
+      operationId: product_attribute_options_list
+      parameters:
+      - in: path
+        name: attribute_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributeOptionListResponse'
+          description: ''
+    post:
+      operationId: product_attribute_options_create
+      parameters:
+      - in: path
+        name: attribute_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeOptionWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttributeOptionWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttributeOptionWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributeOptionResponse'
+          description: ''
+  /api/v1/product-attributes/{attribute_id}/options/{option_id}/:
+    patch:
+      operationId: product_attribute_options_partial_update
+      parameters:
+      - in: path
+        name: attribute_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: option_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAttributeOptionWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAttributeOptionWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAttributeOptionWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributeOptionResponse'
+          description: ''
+    delete:
+      operationId: product_attribute_options_destroy
+      parameters:
+      - in: path
+        name: attribute_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: option_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/product-attributes/{resource_id}/:
+    get:
+      operationId: product_attributes_retrieve
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductAttributeResponse'
+          description: ''
+    patch:
+      operationId: product_attributes_partial_update
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductAttributeWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductAttributeWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductAttributeWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductAttributeResponse'
+          description: ''
+    delete:
+      operationId: product_attributes_destroy
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/product-attributes/{resource_id}/deactivate/:
+    post:
+      operationId: v1_product_attributes_deactivate_create
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeactivationResponse'
+          description: ''
+  /api/v1/products/:
+    get:
+      operationId: products_list
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: price_level_id
+        schema:
+          type: string
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: unit_id
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+          description: ''
+    post:
+      operationId: products_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+          description: ''
+  /api/v1/products/{product_id}/:
+    get:
+      operationId: products_retrieve
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+          description: ''
+    patch:
+      operationId: products_partial_update
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+          description: ''
+    delete:
+      operationId: products_destroy
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/products/{product_id}/prices/:
+    get:
+      operationId: product_prices_list
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPriceListResponse'
+          description: ''
+  /api/v1/products/{resource_id}/deactivate/:
+    post:
+      operationId: v1_products_deactivate_create
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeactivationResponse'
+          description: ''
+  /api/v1/purchase-returns/:
+    get:
+      operationId: purchase_returns_list
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: supplier_id
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseReturnListResponse'
+          description: ''
+    post:
+      operationId: purchase_returns_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseReturnWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseReturnWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseReturnWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseReturnResponse'
+          description: ''
+  /api/v1/purchase-returns/{document_id}/:
+    get:
+      operationId: purchase_returns_retrieve
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: supplier_id
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseReturnResponse'
+          description: ''
+    patch:
+      operationId: purchase_returns_partial_update
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseReturnWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseReturnWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseReturnWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseReturnResponse'
+          description: ''
+  /api/v1/purchase-returns/{document_id}/complete/:
+    post:
+      operationId: purchase_returns_complete
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseReturnResponse'
+          description: ''
+  /api/v1/purchases/:
+    get:
+      operationId: purchases_list
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: supplier_id
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseListResponse'
+          description: ''
+    post:
+      operationId: purchases_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseDocumentWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseDocumentWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseDocumentWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+  /api/v1/purchases/{document_id}/:
+    get:
+      operationId: purchases_retrieve
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: supplier_id
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+    patch:
+      operationId: purchases_partial_update
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseDocumentWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseDocumentWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseDocumentWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+  /api/v1/purchases/{document_id}/complete/:
+    post:
+      operationId: purchases_complete
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+  /api/v1/reports/inventory/:
+    get:
+      operationId: reports_inventory_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryReportResponse'
+          description: ''
+  /api/v1/reports/purchases/:
+    get:
+      operationId: reports_purchases_retrieve
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseReportResponse'
+          description: ''
+  /api/v1/reports/sales/:
+    get:
+      operationId: reports_sales_retrieve
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesReportResponse'
+          description: ''
+  /api/v1/sales-orders/:
+    get:
+      operationId: sales_orders_list
+      parameters:
+      - in: query
+        name: customer_id
+        schema:
+          type: string
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrderListResponse'
+          description: ''
+    post:
+      operationId: sales_orders_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesDocumentWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesDocumentWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesDocumentWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrderResponse'
+          description: ''
+  /api/v1/sales-orders/{document_id}/:
+    get:
+      operationId: sales_orders_retrieve
+      parameters:
+      - in: query
+        name: customer_id
+        schema:
+          type: string
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrderResponse'
+          description: ''
+    patch:
+      operationId: sales_orders_partial_update
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesDocumentWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesDocumentWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesDocumentWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrderResponse'
+          description: ''
+  /api/v1/sales-orders/{document_id}/complete/:
+    post:
+      operationId: sales_orders_complete
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrderResponse'
+          description: ''
+  /api/v1/sales-returns/:
+    get:
+      operationId: sales_returns_list
+      parameters:
+      - in: query
+        name: customer_id
+        schema:
+          type: string
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesReturnListResponse'
+          description: ''
+    post:
+      operationId: sales_returns_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesDocumentWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesDocumentWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesDocumentWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesReturnResponse'
+          description: ''
+  /api/v1/sales-returns/{document_id}/:
+    get:
+      operationId: sales_returns_retrieve
+      parameters:
+      - in: query
+        name: customer_id
+        schema:
+          type: string
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesReturnResponse'
+          description: ''
+    patch:
+      operationId: sales_returns_partial_update
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesDocumentWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesDocumentWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesDocumentWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesReturnResponse'
+          description: ''
+  /api/v1/sales-returns/{document_id}/complete/:
+    post:
+      operationId: sales_returns_complete
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: document_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesReturnResponse'
+          description: ''
+  /api/v1/shop-profile/:
+    get:
+      operationId: shop_profile_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopProfileResponse'
+          description: ''
+    put:
+      operationId: shop_profile_update
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShopProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShopProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShopProfile'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopProfileResponse'
+          description: ''
+  /api/v1/specifications/:
+    get:
+      operationId: specifications_list
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecificationListResponse'
+          description: ''
+    post:
+      operationId: specifications_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecificationWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SpecificationWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SpecificationWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecificationResponse'
+          description: ''
+  /api/v1/specifications/{resource_id}/:
+    get:
+      operationId: specifications_retrieve
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecificationResponse'
+          description: ''
+    patch:
+      operationId: specifications_partial_update
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSpecificationWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSpecificationWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSpecificationWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecificationResponse'
+          description: ''
+    delete:
+      operationId: specifications_destroy
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/specifications/{resource_id}/deactivate/:
+    post:
+      operationId: v1_specifications_deactivate_create
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeactivationResponse'
+          description: ''
+  /api/v1/suppliers/:
+    get:
+      operationId: suppliers_list
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierListResponse'
+          description: ''
+    post:
+      operationId: suppliers_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SupplierWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+          description: ''
+  /api/v1/suppliers/{supplier_id}/:
+    get:
+      operationId: suppliers_retrieve
+      parameters:
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+          description: ''
+    patch:
+      operationId: suppliers_partial_update
+      parameters:
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+          description: ''
+    delete:
+      operationId: suppliers_destroy
+      parameters:
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/suppliers/{supplier_id}/deactivate/:
+    post:
+      operationId: suppliers_deactivate
+      parameters:
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDeactivationResponse'
+          description: ''
+  /api/v1/units/:
+    get:
+      operationId: units_list
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitListResponse'
+          description: ''
+    post:
+      operationId: units_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UnitWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UnitWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitResponse'
+          description: ''
+  /api/v1/units/{resource_id}/:
+    get:
+      operationId: units_retrieve
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitResponse'
+          description: ''
+    patch:
+      operationId: units_partial_update
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitWrite'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitResponse'
+          description: ''
+    delete:
+      operationId: units_destroy
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/units/{resource_id}/deactivate/:
+    post:
+      operationId: v1_units_deactivate_create
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeactivationResponse'
+          description: ''
+components:
+  schemas:
+    ApiRootResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+    AttributeOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        value:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - updated_at
+      - value
+    AttributeOptionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeOption'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    AttributeOptionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AttributeOption'
+      required:
+      - data
+    AttributeOptionWrite:
+      type: object
+      properties:
+        value:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+    CurrentUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          title: 用户名
+          description: 必填；长度为150个字符或以下；只能包含字母、数字、特殊字符“@”、“.”、“-”和“_”。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        display_name:
+          type: string
+          maxLength: 150
+        organization_id:
+          type: string
+          format: uuid
+          readOnly: true
+        organization_name:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        permissions:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - id
+      - organization_id
+      - organization_name
+      - permissions
+      - role
+      - username
+    CurrentUserResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CurrentUser'
+      required:
+      - data
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        contact_name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 50
+        remark:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    CustomerDeactivationResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+    CustomerListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    CustomerResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Customer'
+      required:
+      - data
+    CustomerWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        contact_name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 50
+        remark:
+          type: string
+        is_active:
+          type: boolean
+    Dashboard:
+      type: object
+      properties:
+        today:
+          allOf:
+          - $ref: '#/components/schemas/DashboardMetric'
+          readOnly: true
+        week:
+          allOf:
+          - $ref: '#/components/schemas/DashboardMetric'
+          readOnly: true
+        month:
+          allOf:
+          - $ref: '#/components/schemas/DashboardMetric'
+          readOnly: true
+        last_month:
+          allOf:
+          - $ref: '#/components/schemas/DashboardMetric'
+          readOnly: true
+      required:
+      - last_month
+      - month
+      - today
+      - week
+    DashboardMetric:
+      type: object
+      properties:
+        sales_order_count:
+          type: integer
+          readOnly: true
+        sales_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        gross_profit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          readOnly: true
+      required:
+      - gross_profit
+      - sales_amount
+      - sales_order_count
+    DashboardResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Dashboard'
+      required:
+      - data
+    DeactivationResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+    Employee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+        permission_codes:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - display_name
+      - id
+      - permission_codes
+      - username
+    EmployeeCreate:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 150
+        display_name:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - display_name
+      - password
+      - username
+    EmployeeListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Employee'
+      required:
+      - data
+    EmployeeResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Employee'
+      required:
+      - data
+    HealthCheckResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+    InputTypeEnum:
+      enum:
+      - TEXT
+      - SELECT
+      type: string
+      description: |-
+        * `TEXT` - Text
+        * `SELECT` - Select
+    InventoryReport:
+      type: object
+      properties:
+        product_count:
+          type: integer
+          readOnly: true
+        in_stock_product_count:
+          type: integer
+          readOnly: true
+        out_of_stock_product_count:
+          type: integer
+          readOnly: true
+        total_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,32}(?:\.\d{0,6})?$
+          readOnly: true
+      required:
+      - in_stock_product_count
+      - out_of_stock_product_count
+      - product_count
+      - total_quantity
+      - total_amount
+    InventoryReportResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/InventoryReport'
+      required:
+      - data
+    LabelTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+        orientation:
+          $ref: '#/components/schemas/OrientationEnum'
+        template: {}
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - height_mm
+      - id
+      - name
+      - orientation
+      - updated_at
+      - width_mm
+    LabelTemplateListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelTemplate'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    LabelTemplateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LabelTemplate'
+      required:
+      - data
+    LabelTemplateWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+        orientation:
+          $ref: '#/components/schemas/OrientationEnum'
+        template: {}
+        is_active:
+          type: boolean
+      required:
+      - height_mm
+      - name
+      - orientation
+      - template
+      - width_mm
+    MovementTypeEnum:
+      enum:
+      - INITIAL
+      - PURCHASE
+      - PURCHASE_RETURN
+      - SALE
+      - SALE_RETURN
+      type: string
+      description: |-
+        * `INITIAL` - Initial
+        * `PURCHASE` - Purchase
+        * `PURCHASE_RETURN` - Purchase return
+        * `SALE` - Sale
+        * `SALE_RETURN` - Sale return
+    OrientationEnum:
+      enum:
+      - PORTRAIT
+      - LANDSCAPE
+      type: string
+      description: |-
+        * `PORTRAIT` - Portrait
+        * `LANDSCAPE` - Landscape
+    PatchedAttributeOptionWrite:
+      type: object
+      properties:
+        value:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+    PatchedCustomerWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        contact_name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 50
+        remark:
+          type: string
+        is_active:
+          type: boolean
+    PatchedEmployeeUpdate:
+      type: object
+      properties:
+        display_name:
+          type: string
+          maxLength: 150
+        is_active:
+          type: boolean
+        permission_codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionCodesEnum'
+    PatchedLabelTemplateWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+        orientation:
+          $ref: '#/components/schemas/OrientationEnum'
+        template: {}
+        is_active:
+          type: boolean
+    PatchedPriceLevelWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          minimum: 0
+    PatchedProductAttributeWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+        input_type:
+          $ref: '#/components/schemas/InputTypeEnum'
+    PatchedProductWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        unit_id:
+          type: string
+          format: uuid
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        purchase_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        specification:
+          type: string
+          maxLength: 100
+        remark:
+          type: string
+          maxLength: 1000
+        is_active:
+          type: boolean
+        specification_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSpecificationValueInput'
+        attribute_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductAttributeValueInput'
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPriceInput'
+        initial_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          writeOnly: true
+    PatchedPurchaseDocumentWrite:
+      type: object
+      properties:
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        occurred_on:
+          type: string
+          format: date
+        remark:
+          type: string
+          maxLength: 1000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemInput'
+    PatchedPurchaseReturnWrite:
+      type: object
+      properties:
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        occurred_on:
+          type: string
+          format: date
+        remark:
+          type: string
+          maxLength: 1000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseReturnItemInput'
+        purchase_id:
+          type: string
+          format: uuid
+          nullable: true
+    PatchedSalesDocumentWrite:
+      type: object
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+          nullable: true
+        occurred_on:
+          type: string
+          format: date
+        remark:
+          type: string
+          maxLength: 1000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesItemInput'
+    PatchedSpecificationWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+    PatchedSupplierWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        contact_name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 50
+        remark:
+          type: string
+        is_active:
+          type: boolean
+        contact_address:
+          type: string
+          maxLength: 255
+    PatchedUnitWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+    PermissionCodeEnum:
+      enum:
+      - employees.manage
+      - partners.manage
+      - products.manage
+      - purchases.returns.manage
+      - sales.returns.manage
+      - shop.manage
+      type: string
+      description: |-
+        * `employees.manage` - employees.manage
+        * `partners.manage` - partners.manage
+        * `products.manage` - products.manage
+        * `purchases.returns.manage` - purchases.returns.manage
+        * `sales.returns.manage` - sales.returns.manage
+        * `shop.manage` - shop.manage
+    PermissionCodesEnum:
+      enum:
+      - employees.manage
+      - partners.manage
+      - products.manage
+      - purchases.returns.manage
+      - sales.returns.manage
+      - shop.manage
+      type: string
+      description: |-
+        * `employees.manage` - employees.manage
+        * `partners.manage` - partners.manage
+        * `products.manage` - products.manage
+        * `purchases.returns.manage` - purchases.returns.manage
+        * `sales.returns.manage` - sales.returns.manage
+        * `shop.manage` - shop.manage
+    PermissionRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        employee_id:
+          type: string
+          format: uuid
+          readOnly: true
+        employee_name:
+          type: string
+          readOnly: true
+        permission_code:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/PermissionRequestStatusEnum'
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - employee_id
+      - employee_name
+      - id
+      - permission_code
+    PermissionRequestCreate:
+      type: object
+      properties:
+        permission_code:
+          $ref: '#/components/schemas/PermissionCodeEnum'
+      required:
+      - permission_code
+    PermissionRequestListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionRequest'
+      required:
+      - data
+    PermissionRequestResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/PermissionRequest'
+      required:
+      - data
+    PermissionRequestStatusEnum:
+      enum:
+      - PENDING
+      - APPROVED
+      - REJECTED
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `APPROVED` - Approved
+        * `REJECTED` - Rejected
+    PriceLevel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    PriceLevelListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceLevel'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    PriceLevelResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/PriceLevel'
+      required:
+      - data
+    PriceLevelWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          minimum: 0
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        unit_id:
+          type: string
+          format: uuid
+        unit_name:
+          type: string
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        supplier_name:
+          type: string
+          nullable: true
+        purchase_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        specification:
+          type: string
+          maxLength: 100
+        remark:
+          type: string
+        is_active:
+          type: boolean
+        specification_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSpecificationValue'
+          readOnly: true
+        attribute_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductAttributeValue'
+          readOnly: true
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPrice'
+          readOnly: true
+        stock_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - attribute_values
+      - created_at
+      - id
+      - name
+      - prices
+      - specification_values
+      - stock_quantity
+      - supplier_id
+      - supplier_name
+      - unit_id
+      - unit_name
+      - updated_at
+    ProductAttribute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        input_type:
+          $ref: '#/components/schemas/InputTypeEnum'
+        is_active:
+          type: boolean
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeOption'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - input_type
+      - name
+      - options
+      - updated_at
+    ProductAttributeListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductAttribute'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    ProductAttributeResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProductAttribute'
+      required:
+      - data
+    ProductAttributeValue:
+      type: object
+      properties:
+        attribute_id:
+          type: string
+          format: uuid
+        attribute_name:
+          type: string
+        input_type:
+          type: string
+        text_value:
+          type: string
+          nullable: true
+        option_id:
+          type: string
+          format: uuid
+          nullable: true
+        option_value:
+          type: string
+          nullable: true
+      required:
+      - attribute_id
+      - attribute_name
+      - input_type
+      - option_id
+      - option_value
+      - text_value
+    ProductAttributeValueInput:
+      type: object
+      properties:
+        attribute_id:
+          type: string
+          format: uuid
+        text_value:
+          type: string
+          maxLength: 500
+        option_id:
+          type: string
+          format: uuid
+      required:
+      - attribute_id
+    ProductAttributeWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+        input_type:
+          $ref: '#/components/schemas/InputTypeEnum'
+    ProductListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    ProductPrice:
+      type: object
+      properties:
+        price_level_id:
+          type: string
+          format: uuid
+        price_level_name:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - price_level_id
+      - price_level_name
+    ProductPriceInput:
+      type: object
+      properties:
+        price_level_id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - price_level_id
+    ProductPriceListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPrice'
+      required:
+      - data
+    ProductResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Product'
+      required:
+      - data
+    ProductSpecificationValue:
+      type: object
+      properties:
+        specification_id:
+          type: string
+          format: uuid
+        specification_name:
+          type: string
+        value:
+          type: string
+          maxLength: 100
+      required:
+      - specification_id
+      - specification_name
+      - value
+    ProductSpecificationValueInput:
+      type: object
+      properties:
+        specification_id:
+          type: string
+          format: uuid
+        value:
+          type: string
+          maxLength: 100
+      required:
+      - specification_id
+      - value
+    ProductWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        unit_id:
+          type: string
+          format: uuid
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        purchase_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        specification:
+          type: string
+          maxLength: 100
+        remark:
+          type: string
+          maxLength: 1000
+        is_active:
+          type: boolean
+        specification_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSpecificationValueInput'
+        attribute_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductAttributeValueInput'
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPriceInput'
+        initial_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          writeOnly: true
+    Purchase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        document_no:
+          type: string
+          readOnly: true
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        supplier_name:
+          type: string
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusE3aEnum'
+          readOnly: true
+        occurred_on:
+          type: string
+          format: date
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        remark:
+          type: string
+          readOnly: true
+        completed_by_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItem'
+          readOnly: true
+      required:
+      - completed_at
+      - completed_by_user_id
+      - created_at
+      - document_no
+      - id
+      - items
+      - occurred_on
+      - remark
+      - status
+      - supplier_id
+      - total_amount
+      - updated_at
+    PurchaseDocumentWrite:
+      type: object
+      properties:
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        occurred_on:
+          type: string
+          format: date
+        remark:
+          type: string
+          maxLength: 1000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemInput'
+    PurchaseItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        line_no:
+          type: integer
+          readOnly: true
+        product_id:
+          type: string
+          format: uuid
+        product_name_snapshot:
+          type: string
+          readOnly: true
+        unit_name_snapshot:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        line_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - id
+      - line_amount
+      - line_no
+      - product_id
+      - product_name_snapshot
+      - quantity
+      - unit_name_snapshot
+      - unit_price
+    PurchaseItemInput:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+      required:
+      - product_id
+      - quantity
+    PurchaseListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Purchase'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    PurchaseReport:
+      type: object
+      properties:
+        purchase_count:
+          type: integer
+          readOnly: true
+        purchase_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        purchase_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        purchase_return_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        purchase_return_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        net_purchase_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        net_purchase_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - net_purchase_amount
+      - net_purchase_quantity
+      - purchase_amount
+      - purchase_count
+      - purchase_quantity
+      - purchase_return_amount
+      - purchase_return_quantity
+    PurchaseReportResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/PurchaseReport'
+      required:
+      - data
+    PurchaseResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Purchase'
+      required:
+      - data
+    PurchaseReturn:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        document_no:
+          type: string
+          readOnly: true
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        supplier_name:
+          type: string
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusE3aEnum'
+          readOnly: true
+        occurred_on:
+          type: string
+          format: date
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        remark:
+          type: string
+          readOnly: true
+        completed_by_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        purchase_id:
+          type: string
+          format: uuid
+          nullable: true
+        purchase_no:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseReturnItem'
+          readOnly: true
+      required:
+      - completed_at
+      - completed_by_user_id
+      - created_at
+      - document_no
+      - id
+      - items
+      - occurred_on
+      - purchase_id
+      - remark
+      - status
+      - supplier_id
+      - total_amount
+      - updated_at
+    PurchaseReturnItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        line_no:
+          type: integer
+          readOnly: true
+        product_id:
+          type: string
+          format: uuid
+        product_name_snapshot:
+          type: string
+          readOnly: true
+        unit_name_snapshot:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        line_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        purchase_item_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - id
+      - line_amount
+      - line_no
+      - product_id
+      - product_name_snapshot
+      - purchase_item_id
+      - quantity
+      - unit_name_snapshot
+      - unit_price
+    PurchaseReturnItemInput:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        purchase_item_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - product_id
+      - quantity
+    PurchaseReturnListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseReturn'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    PurchaseReturnResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/PurchaseReturn'
+      required:
+      - data
+    PurchaseReturnWrite:
+      type: object
+      properties:
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+        occurred_on:
+          type: string
+          format: date
+        remark:
+          type: string
+          maxLength: 1000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseReturnItemInput'
+        purchase_id:
+          type: string
+          format: uuid
+          nullable: true
+    RefreshResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TokenAccess'
+      required:
+      - data
+    Register:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - username
+    SalesDocumentWrite:
+      type: object
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+          nullable: true
+        occurred_on:
+          type: string
+          format: date
+        remark:
+          type: string
+          maxLength: 1000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesItemInput'
+    SalesItemInput:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+      required:
+      - product_id
+      - quantity
+      - unit_price
+    SalesOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        document_no:
+          type: string
+          readOnly: true
+        customer_id:
+          type: string
+          format: uuid
+          nullable: true
+        customer_name:
+          type: string
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusE3aEnum'
+          readOnly: true
+        occurred_on:
+          type: string
+          format: date
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        remark:
+          type: string
+          readOnly: true
+        completed_by_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesOrderItem'
+          readOnly: true
+      required:
+      - completed_at
+      - completed_by_user_id
+      - created_at
+      - customer_id
+      - document_no
+      - id
+      - items
+      - occurred_on
+      - remark
+      - status
+      - total_amount
+      - updated_at
+    SalesOrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        line_no:
+          type: integer
+          readOnly: true
+        product_id:
+          type: string
+          format: uuid
+        product_name_snapshot:
+          type: string
+          readOnly: true
+        unit_name_snapshot:
+          type: string
+          readOnly: true
+        price_level_id:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        line_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        unit_cost_snapshot:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        cost_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          readOnly: true
+      required:
+      - cost_amount
+      - id
+      - line_amount
+      - line_no
+      - price_level_id
+      - product_id
+      - product_name_snapshot
+      - quantity
+      - unit_cost_snapshot
+      - unit_name_snapshot
+      - unit_price
+    SalesOrderListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesOrder'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    SalesOrderResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SalesOrder'
+      required:
+      - data
+    SalesReport:
+      type: object
+      properties:
+        sales_order_count:
+          type: integer
+          readOnly: true
+        sales_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        sales_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        sales_return_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        sales_return_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        net_sales_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        net_sales_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        sales_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          readOnly: true
+        sales_return_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          readOnly: true
+        net_sales_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          readOnly: true
+        gross_profit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          readOnly: true
+      required:
+      - gross_profit
+      - net_sales_amount
+      - net_sales_cost
+      - net_sales_quantity
+      - sales_amount
+      - sales_cost
+      - sales_order_count
+      - sales_quantity
+      - sales_return_amount
+      - sales_return_cost
+      - sales_return_quantity
+    SalesReportResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SalesReport'
+      required:
+      - data
+    SalesReturn:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        document_no:
+          type: string
+          readOnly: true
+        customer_id:
+          type: string
+          format: uuid
+          nullable: true
+        customer_name:
+          type: string
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusE3aEnum'
+          readOnly: true
+        occurred_on:
+          type: string
+          format: date
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        remark:
+          type: string
+          readOnly: true
+        completed_by_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        sales_order_id:
+          type: string
+          format: uuid
+        sales_order_no:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesReturnItem'
+          readOnly: true
+      required:
+      - completed_at
+      - completed_by_user_id
+      - created_at
+      - customer_id
+      - document_no
+      - id
+      - items
+      - occurred_on
+      - remark
+      - sales_order_id
+      - sales_order_no
+      - status
+      - total_amount
+      - updated_at
+    SalesReturnItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        line_no:
+          type: integer
+          readOnly: true
+        product_id:
+          type: string
+          format: uuid
+        product_name_snapshot:
+          type: string
+          readOnly: true
+        unit_name_snapshot:
+          type: string
+          readOnly: true
+        price_level_id:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+          readOnly: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        line_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        unit_cost_snapshot:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        cost_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          readOnly: true
+        sales_order_item_id:
+          type: string
+          format: uuid
+      required:
+      - cost_amount
+      - id
+      - line_amount
+      - line_no
+      - price_level_id
+      - product_id
+      - product_name_snapshot
+      - quantity
+      - sales_order_item_id
+      - unit_cost_snapshot
+      - unit_name_snapshot
+      - unit_price
+    SalesReturnListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesReturn'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    SalesReturnResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SalesReturn'
+      required:
+      - data
+    ShopProfile:
+      type: object
+      properties:
+        shop_name:
+          type: string
+          maxLength: 150
+        remark:
+          type: string
+      required:
+      - shop_name
+    ShopProfileResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ShopProfile'
+      required:
+      - data
+    Specification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    SpecificationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Specification'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    SpecificationResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Specification'
+      required:
+      - data
+    SpecificationWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+    StatusE3aEnum:
+      enum:
+      - DRAFT
+      - COMPLETED
+      type: string
+      description: |-
+        * `DRAFT` - Draft
+        * `COMPLETED` - Completed
+    StockBalance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        product_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        unit_name:
+          type: string
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - id
+      - product_id
+      - product_name
+      - unit_name
+      - updated_at
+    StockBalanceListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockBalance'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    StockMovement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        product_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        unit_name:
+          type: string
+        movement_type:
+          $ref: '#/components/schemas/MovementTypeEnum'
+        quantity_delta:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+        source_type:
+          type: string
+          maxLength: 40
+        source_id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+        operator_name:
+          type: string
+          readOnly: true
+        remark:
+          type: string
+      required:
+      - id
+      - movement_type
+      - occurred_at
+      - operator_name
+      - product_id
+      - product_name
+      - quantity_delta
+      - source_id
+      - source_type
+      - unit_name
+    StockMovementListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockMovement'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        contact_name:
+          type: string
+          maxLength: 100
+        contact_address:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          maxLength: 50
+        remark:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    SupplierDeactivationResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+    SupplierListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    SupplierResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Supplier'
+      required:
+      - data
+    SupplierWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        contact_name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 50
+        remark:
+          type: string
+        is_active:
+          type: boolean
+        contact_address:
+          type: string
+          maxLength: 255
+    TokenAccess:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+    TokenLogin:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - username
+    TokenPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    TokenRefreshInput:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - refresh
+    TokenResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TokenPair'
+      required:
+      - data
+    Unit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    UnitListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Unit'
+        meta:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - meta
+    UnitResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Unit'
+      required:
+      - data
+    UnitWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,32 @@
+# 环境配置与密钥
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+coverage.xml
+htmlcov/
+
+# Node.js
+node_modules/
+dist/
+
+# Local database data and backups
+postgres-data/
+postgres_data/
+*.sqlite3
+*.sqlite3-*
+*.backup
+*.dump
+/backups/
+
+# Vite and npm local files
+.npm-cache/
+frontend/.vite/
+frontend/coverage/
