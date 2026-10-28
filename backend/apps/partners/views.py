@@ -18,6 +18,7 @@ from .serializers import (
     SupplierSerializer,
     SupplierWriteSerializer,
 )
+from .services import save_partner
 
 
 class ResourceInUse(APIException):
@@ -58,13 +59,15 @@ class CustomerListCreateView(APIView):
             customers = customers.filter(is_active=request.query_params["is_active"] == "true")
         if search := request.query_params.get("search"):
             customers = customers.filter(name__icontains=search)
-        return list_response(request, customers.order_by("name"), CustomerSerializer)
+        return list_response(request, customers.order_by("name", "id"), CustomerSerializer)
 
     def post(self, request):
         membership = require_partner_permission(request.user, "partners.manage")
         serializer = CustomerWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        customer = Customer.objects.create(organization=membership.organization, **serializer.validated_data)
+        customer = save_partner(
+            model=Customer, organization=membership.organization, values=serializer.validated_data
+        )
         return data_response(CustomerSerializer(customer).data, status.HTTP_201_CREATED)
 
 
@@ -91,9 +94,12 @@ class CustomerDetailView(APIView):
         customer = self.get_object(membership.organization, customer_id)
         serializer = CustomerWriteSerializer(customer, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        for field_name, value in serializer.validated_data.items():
-            setattr(customer, field_name, value)
-        customer.save()
+        customer = save_partner(
+            model=Customer,
+            organization=membership.organization,
+            values=serializer.validated_data,
+            instance=customer,
+        )
         return data_response(CustomerSerializer(customer).data)
 
     def delete(self, request, customer_id):
@@ -145,7 +151,7 @@ class SupplierListCreateView(CustomerListCreateView):
             suppliers = suppliers.filter(is_active=request.query_params["is_active"] == "true")
         if search := request.query_params.get("search"):
             suppliers = suppliers.filter(name__icontains=search)
-        return list_response(request, suppliers.order_by("name"), SupplierSerializer)
+        return list_response(request, suppliers.order_by("name", "id"), SupplierSerializer)
 
     @extend_schema(
         operation_id="suppliers_create",
@@ -156,7 +162,9 @@ class SupplierListCreateView(CustomerListCreateView):
         membership = require_partner_permission(request.user, "partners.manage")
         serializer = SupplierWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        supplier = Supplier.objects.create(organization=membership.organization, **serializer.validated_data)
+        supplier = save_partner(
+            model=Supplier, organization=membership.organization, values=serializer.validated_data
+        )
         return data_response(SupplierSerializer(supplier).data, status.HTTP_201_CREATED)
 
 
@@ -176,9 +184,12 @@ class SupplierDetailView(CustomerDetailView):
         supplier = self.get_object(membership.organization, supplier_id)
         serializer = SupplierWriteSerializer(supplier, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        for field_name, value in serializer.validated_data.items():
-            setattr(supplier, field_name, value)
-        supplier.save()
+        supplier = save_partner(
+            model=Supplier,
+            organization=membership.organization,
+            values=serializer.validated_data,
+            instance=supplier,
+        )
         return data_response(SupplierSerializer(supplier).data)
 
     def get_object(self, organization, supplier_id):

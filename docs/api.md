@@ -23,6 +23,8 @@
 
 ## 3. 基础资料
 
+客户和供应商的名称允许重复。客户以当前组织内的 `name + contact_name + phone` 判重；供应商以 `name + contact_name + contact_address + phone` 判重，包含停用资料且忽略首尾空格。可选字段缺省视为空字符串，PATCH 结合现有字段判断并排除当前记录。重复的 POST/PATCH 分别返回 `409 duplicate_customer` 或 `409 duplicate_supplier`，沿用统一错误响应结构，`message` 包含可理解的中文说明；若冲突资料已停用，提示切换“仅停用”查看。不自动规范化内部空格、电话标点或区号，不以备注区分身份。失败保存不得部分更新资料。
+
 `/products/`、`/units/`、`/specifications/`、`/product-attributes/`、`/price-levels/`、`/customers/`、`/suppliers/` 支持受权限约束的列表与草稿资料 CRUD；`/products/{id}/prices/` 查询价格。选择型商品属性的可选项使用嵌套资源 `GET,POST /product-attributes/{attribute_id}/options/` 和 `PATCH,DELETE /product-attributes/{attribute_id}/options/{option_id}/` 管理。删除已引用资料应返回 `409 resource_in_use`，停用使用 `POST /{resource}/{id}/deactivate/`。所有列表可用 `is_active` 筛选和 `search`；商品可额外按 `unit_id`、`price_level_id` 筛选。供应商请求体中的 `name` 为创建必填项，可选 `contact_name`、`contact_address`、`phone` 和 `remark`。
 
 商品创建请求包含 `name`、`unit_id`，可包含 `supplier_id`、`initial_quantity`、`specification_values`、`attribute_values` 和 `prices`。`supplier_id` 是可选默认供应商，必须为当前组织的启用供应商，商品读取结果返回 `supplier_id`、`supplier_name`；它不影响采购单中单独选择的供应商。规格值使用 `{specification_id, value}`；文本属性使用 `{attribute_id, text_value}`，选择型属性使用 `{attribute_id, option_id}`；价格使用 `{price_level_id, amount}`。`initial_quantity` 仅能在创建时提供，后端须转化为 `INITIAL` 流水（INV-004），不得暴露库存余额写接口。价格等级创建或启用超过六个应返回 `409 price_level_limit`（MD-003）。

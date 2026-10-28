@@ -30,6 +30,10 @@
         <el-option label="仅停用" value="false" />
       </el-select>
       <el-button :icon="Refresh" circle title="刷新供应商列表" @click="suppliersQuery.refetch()" />
+      <el-select v-model="sortOrder" class="list-sort-select" aria-label="供应商排序方式">
+        <el-option v-for="option in listSortOptions" :key="option.value" :label="option.label" :value="option.value" />
+      </el-select>
+      <span class="list-sort-help">{{ listSortHelpText }}</span>
     </div>
 
     <el-table v-loading="suppliersQuery.isLoading.value" :data="suppliers" empty-text="暂无供应商">
@@ -55,6 +59,7 @@
     </el-table>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="min(680px, 94vw)" destroy-on-close>
+      <el-alert v-if="errorMessage" class="supplier-workspace__alert" type="error" :title="errorMessage" show-icon @close="errorMessage = ''" />
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="save">
         <div class="supplier-workspace__form-grid">
           <el-form-item label="供应商名称" prop="name" required>
@@ -92,6 +97,8 @@ import { ApiError, V1Service } from '../../api/generated'
 import type { Supplier, SupplierWrite } from '../../api/generated'
 import { fetchAllPages } from '../../api/pagination'
 import { useAuthStore } from '../../stores/auth'
+import { listSortHelpText, listSortOptions, sortRecords } from '../../utils/listSorting'
+import { useListSorting } from '../../composables/useListSorting'
 
 type SupplierForm = {
   name: string
@@ -107,6 +114,7 @@ const formRef = ref<FormInstance>()
 const search = ref('')
 const activeFilter = ref('true')
 const errorMessage = ref('')
+const { sortOrder } = useListSorting('suppliers', () => auth.user, (message) => { errorMessage.value = message })
 const dialogVisible = ref(false)
 const editingId = ref<string | null>(null)
 const form = reactive<SupplierForm>(emptyForm())
@@ -130,7 +138,7 @@ const suppliersQuery = useQuery({
     ),
   retry: false,
 })
-const suppliers = computed<Supplier[]>(() => suppliersQuery.data.value ?? [])
+const suppliers = computed<Supplier[]>(() => sortRecords(suppliersQuery.data.value ?? [], sortOrder.value))
 const saveMutation = useMutation({
   mutationFn: saveSupplier,
   onSuccess: async () => {
@@ -211,15 +219,17 @@ async function runConfirmed(message: string, action: () => Promise<unknown>) {
 </script>
 
 <style scoped>
+.list-sort-help { color: #6b7780; font-size: 12px; }
 .supplier-workspace { max-width: 1180px; margin: 0 auto; padding: 28px 24px 48px; }
 .supplier-workspace__heading, .supplier-workspace__toolbar { display: flex; align-items: center; gap: 12px; }
 .supplier-workspace__heading { justify-content: space-between; margin-bottom: 24px; }
 .supplier-workspace__heading p { margin: 0 0 6px; color: #6b7780; font-size: 14px; }
 .supplier-workspace__heading h1 { margin: 0; font-size: 28px; }
 .supplier-workspace__alert { margin-bottom: 16px; }
-.supplier-workspace__toolbar { margin-bottom: 16px; }
+.supplier-workspace__toolbar { margin-bottom: 16px; flex-wrap: wrap; }
 .supplier-workspace__toolbar .el-input { width: 280px; }
 .supplier-workspace__toolbar .el-select { width: 130px; }
+.supplier-workspace__toolbar .list-sort-select { width: 200px; }
 .supplier-workspace__form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; }
 .supplier-workspace__form-wide { grid-column: 1 / -1; }
 @media (max-width: 600px) {

@@ -1,8 +1,15 @@
 import uuid
 
 from django.db import models
+from django.db.models.functions import Trim
 
 from apps.accounts.models import Organization, TimestampedModel
+
+
+CUSTOMER_IDENTITY_FIELDS = ("name", "contact_name", "phone")
+SUPPLIER_IDENTITY_FIELDS = ("name", "contact_name", "contact_address", "phone")
+CUSTOMER_IDENTITY_CONSTRAINT = "partners_customer_identity_unique"
+SUPPLIER_IDENTITY_CONSTRAINT = "partners_supplier_identity_unique"
 
 
 class PriceLevel(TimestampedModel):
@@ -42,8 +49,9 @@ class Customer(TimestampedModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["organization", "name"],
-                name="partners_customer_organization_name_unique",
+                models.F("organization"),
+                *(Trim(field) for field in CUSTOMER_IDENTITY_FIELDS),
+                name=CUSTOMER_IDENTITY_CONSTRAINT,
             )
         ]
         indexes = [models.Index(fields=["organization", "is_active", "created_at"])]
@@ -66,8 +74,9 @@ class Supplier(TimestampedModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["organization", "name"],
-                name="partners_supplier_organization_name_unique",
+                models.F("organization"),
+                *(Trim(field) for field in SUPPLIER_IDENTITY_FIELDS),
+                name=SUPPLIER_IDENTITY_CONSTRAINT,
             )
         ]
         indexes = [models.Index(fields=["organization", "is_active", "created_at"])]

@@ -20,6 +20,10 @@
             <el-option label="仅停用" value="false" />
           </el-select>
           <el-button :icon="Refresh" circle title="刷新商品列表" @click="productsQuery.refetch()" />
+          <el-select v-model="sortOrder" class="list-sort-select" aria-label="商品排序方式">
+            <el-option v-for="option in listSortOptions" :key="option.value" :label="option.label" :value="option.value" />
+          </el-select>
+          <span class="list-sort-help">{{ listSortHelpText }}</span>
         </div>
         <el-table v-loading="productsQuery.isLoading.value" :data="products" empty-text="暂无商品">
           <el-table-column prop="name" label="商品名称" min-width="180" />
@@ -62,7 +66,7 @@
       <el-form label-position="top">
         <div class="product-form__grid">
           <el-form-item label="商品名称" required><el-input v-model="productForm.name" maxlength="200" /></el-form-item>
-          <el-form-item label="默认供应商"><el-select v-model="productForm.supplier_id" clearable filterable placeholder="请选择供应商"><el-option v-for="supplier in selectableSuppliers" :key="supplier.id" :label="supplier.name" :value="supplier.id" /></el-select></el-form-item>
+          <el-form-item label="默认供应商"><el-select v-model="productForm.supplier_id" clearable filterable placeholder="请选择供应商"><el-option v-for="supplier in selectableSuppliers" :key="supplier.id" :label="formatSupplierOption(supplier)" :title="formatSupplierOption(supplier)" :value="supplier.id" /></el-select></el-form-item>
           <el-form-item label="单位" required><el-select v-model="productForm.unit_id" filterable><el-option v-for="unit in activeUnits" :key="unit.id" :label="unit.name" :value="unit.id" /></el-select></el-form-item>
           <el-form-item label="进货价" required><el-input v-model="productForm.purchase_price" inputmode="decimal" placeholder="0.00" /></el-form-item>
           <el-form-item v-if="!editingProductId" label="初始库存"><el-input v-model="productForm.initial_quantity" inputmode="numeric" placeholder="0" /></el-form-item>
@@ -113,6 +117,9 @@ import { ApiError, InputTypeEnum, V1Service } from '../../api/generated'
 import { fetchAllPages } from '../../api/pagination'
 import { useAuthStore } from '../../stores/auth'
 import { formatPrice, formatQuantity } from '../../utils/numberFormat'
+import { formatSupplierOption } from '../../utils/partnerFormat'
+import { listSortHelpText, listSortOptions, sortRecords } from '../../utils/listSorting'
+import { useListSorting } from '../../composables/useListSorting'
 
 type CatalogKind = 'unit' | 'specification' | 'attribute' | 'priceLevel'
 
@@ -122,6 +129,7 @@ const activeTab = ref('products')
 const search = ref('')
 const activeFilter = ref('true')
 const errorMessage = ref('')
+const { sortOrder } = useListSorting('products', () => auth.user, (message) => { errorMessage.value = message })
 const productDialogVisible = ref(false)
 const editingProductId = ref<string | null>(null)
 const catalogDialogVisible = ref(false)
@@ -160,7 +168,7 @@ const suppliersQuery = useQuery({
   queryFn: () => fetchAllPages((page, pageSize) => V1Service.suppliersList(true, page, pageSize)),
   retry: false,
 })
-const products = computed(() => productsQuery.data.value ?? [])
+const products = computed(() => sortRecords(productsQuery.data.value ?? [], sortOrder.value))
 const catalog = computed(() => catalogQuery.data.value ?? { units: [] as Unit[], specifications: [] as Specification[], attributes: [] as ProductAttribute[], priceLevels: [] as PriceLevel[] })
 const activeUnits = computed(() => catalog.value.units.filter((item) => item.is_active))
 const activeSpecifications = computed(() => catalog.value.specifications.filter((item) => item.is_active))
@@ -212,8 +220,11 @@ async function deleteProduct(id: string) { try { await ElMessageBox.confirm('删
 </script>
 
 <style scoped>
+.list-sort-help { color: #6b7780; font-size: 12px; }
 .product-workspace { max-width: 1180px; margin: 0 auto; padding: 28px 24px 48px; }
 .product-workspace__heading, .product-workspace__subheading, .product-workspace__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.product-workspace__toolbar { flex-wrap: wrap; }
+.product-workspace__toolbar .el-select.list-sort-select { width: 200px; }
 .product-workspace__heading { margin-bottom: 24px; }.product-workspace__heading p { margin: 0 0 6px; color: #6b7780; font-size: 14px; }.product-workspace__heading h1 { margin: 0; font-size: 28px; }.product-workspace__alert { margin-bottom: 16px; }.product-workspace__subheading { margin: 0 0 16px; font-size: 16px; font-weight: 650; }.product-workspace__toolbar { justify-content: flex-start; margin-bottom: 16px; }.product-workspace__toolbar .el-input { width: 280px; }.product-workspace__toolbar .el-select { width: 130px; }.product-workspace__option { margin-right: 6px; }.product-form__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; }.product-form__specification-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; gap: 12px; margin-bottom: 12px; }
 @media (max-width: 720px) { .product-workspace { padding: 24px 16px 36px; }.product-workspace__heading { align-items: flex-start; }.product-workspace__toolbar { align-items: stretch; flex-wrap: wrap; }.product-workspace__toolbar .el-input { width: calc(100% - 52px); }.product-form__grid { grid-template-columns: 1fr; }.product-form__specification-row { grid-template-columns: minmax(0, 1fr) 40px; }.product-form__specification-row .el-input { grid-column: 1 / -1; grid-row: 2; } }
 </style>

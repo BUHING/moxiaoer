@@ -16,7 +16,7 @@
       <section class="sales-panel">
         <div class="sales-panel__toolbar"><el-select v-model="statusFilter" clearable placeholder="全部状态"><el-option label="草稿" value="DRAFT" /><el-option label="已完成" value="COMPLETED" /></el-select><el-button :icon="Refresh" circle title="刷新单据" @click="documentsQuery.refetch()" /></div>
         <el-table v-loading="documentsQuery.isLoading.value" :data="documents" highlight-current-row empty-text="暂无单据" @current-change="selectDocument">
-          <el-table-column prop="document_no" label="单号" min-width="155" />
+          <el-table-column prop="document_no" label="单号" min-width="220" class-name="document-number" />
           <el-table-column label="客户" min-width="110"><template #default="scope">{{ partnerName(scope.row.customer_name) }}</template></el-table-column>
           <el-table-column prop="total_amount" label="金额" width="140"><template #default="scope">{{ formatPrice(scope.row.total_amount) }}</template></el-table-column>
           <el-table-column label="状态" width="82"><template #default="scope"><el-tag :type="scope.row.status === 'COMPLETED' ? 'success' : 'warning'">{{ scope.row.status === 'COMPLETED' ? '已完成' : '草稿' }}</el-tag></template></el-table-column>
@@ -28,7 +28,7 @@
           <div class="sales-editor__title"><span>{{ selectedDocument.document_no }}</span><el-tag :type="selectedDocument.status === 'COMPLETED' ? 'success' : 'warning'">{{ selectedDocument.status === 'COMPLETED' ? '已完成' : '草稿' }}</el-tag></div>
           <el-form label-position="top" :disabled="isCompleted || !canCurrentAction">
             <div class="sales-editor__details">
-              <el-form-item label="客户"><div class="sales-editor__customer"><el-select v-model="form.customer_id" clearable filterable placeholder="选择客户（可选）"><el-option v-for="customer in customers" :key="customer.id" :label="customer.name" :value="customer.id" /></el-select><el-button v-if="canManageCustomers" :icon="Plus" circle title="新增客户" @click="customerDialogVisible = true" /></div></el-form-item>
+              <el-form-item label="客户"><div class="sales-editor__customer"><el-select v-model="form.customer_id" clearable filterable placeholder="选择客户（可选）"><el-option v-for="customer in customers" :key="customer.id" :label="formatCustomerOption(customer)" :title="formatCustomerOption(customer)" :value="customer.id" /></el-select><el-button v-if="canManageCustomers" :icon="Plus" circle title="新增客户" @click="customerErrorMessage = ''; customerDialogVisible = true" /></div></el-form-item>
               <el-form-item v-if="isReturnMode" label="原销售单" required><el-select v-model="form.sales_order_id" filterable placeholder="选择已完成销售单" @change="selectSourceOrder"><el-option v-for="order in sourceOrders" :key="order.id" :label="`${order.document_no} - ${order.customer_name}`" :value="order.id" /></el-select></el-form-item>
               <el-form-item label="业务日期" required><el-date-picker v-model="form.occurred_on" type="date" value-format="YYYY-MM-DD" /></el-form-item>
             </div>
@@ -49,7 +49,8 @@
     </div>
 
     <el-dialog v-model="customerDialogVisible" title="新增客户" width="420px" destroy-on-close>
-      <el-form label-position="top"><el-form-item label="客户名称" required><el-input v-model="newCustomerName" maxlength="150" /></el-form-item><el-form-item label="备注"><el-input v-model="newCustomerRemark" type="textarea" :rows="3" placeholder="请输入备注" /></el-form-item></el-form>
+      <el-alert v-if="customerErrorMessage" class="sales-workspace__alert" type="error" :title="customerErrorMessage" show-icon @close="customerErrorMessage = ''" />
+      <el-form label-position="top"><el-form-item label="客户名称" required><el-input v-model="newCustomerName" maxlength="150" /></el-form-item><el-form-item label="联系人"><el-input v-model="newCustomerContactName" maxlength="100" /></el-form-item><el-form-item label="电话"><el-input v-model="newCustomerPhone" maxlength="50" /></el-form-item><el-form-item label="备注"><el-input v-model="newCustomerRemark" type="textarea" :rows="3" placeholder="请输入备注" /></el-form-item></el-form>
       <template #footer><el-button @click="customerDialogVisible = false">取消</el-button><el-button type="primary" :loading="customerMutation.isPending.value" @click="createCustomer">保存</el-button></template>
     </el-dialog>
   </section>
@@ -63,10 +64,11 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ApiError, V1Service } from '../../api/generated'
 import { deleteDocument } from '../../api/account'
-import type { Customer, Product, SalesDocumentWrite, SalesOrder, SalesReturn } from '../../api/generated'
+import type { Customer, CustomerWrite, Product, SalesDocumentWrite, SalesOrder, SalesReturn } from '../../api/generated'
 import { fetchAllPages } from '../../api/pagination'
 import { useAuthStore } from '../../stores/auth'
 import { formatPrice, formatQuantity } from '../../utils/numberFormat'
+import { formatCustomerOption } from '../../utils/partnerFormat'
 
 type Document = SalesOrder | SalesReturn
 type SalesFormItem = { product_id: string; quantity: string; unit_price: string; sales_order_item_id?: string }
@@ -80,7 +82,10 @@ const statusFilter = ref('')
 const selectedDocument = ref<Document | null>(null)
 const errorMessage = ref('')
 const customerDialogVisible = ref(false)
+const customerErrorMessage = ref('')
 const newCustomerName = ref('')
+const newCustomerContactName = ref('')
+const newCustomerPhone = ref('')
 const newCustomerRemark = ref('')
 const form = reactive<SalesForm>({ customer_id: '', occurred_on: new Date().toISOString().slice(0, 10), remark: '', items: [] })
 const canCreate = computed(() => auth.user?.permissions.includes('*') || auth.user?.permissions.includes('sales.create'))
@@ -98,7 +103,7 @@ const customers = computed<Customer[]>(() => customersQuery.data.value ?? [])
 const products = computed<Product[]>(() => productsQuery.data.value ?? [])
 const saveMutation = useMutation({ mutationFn: async () => { const payload = documentPayload(); return selectedDocument.value?.id ? isReturnMode.value ? V1Service.salesReturnsPartialUpdate(selectedDocument.value.id, payload) : V1Service.salesOrdersPartialUpdate(selectedDocument.value.id, payload) : isReturnMode.value ? V1Service.salesReturnsCreate(payload) : V1Service.salesOrdersCreate(payload) }, onSuccess: async (response) => { selectedDocument.value = response.data; assignForm(response.data); await queryClient.invalidateQueries({ queryKey: ['sales-documents'] }) } })
 const completeMutation = useMutation({ mutationFn: async () => { if (!selectedDocument.value) throw new Error('请先保存单据。'); const idempotencyKey = crypto.randomUUID(); return isReturnMode.value ? V1Service.salesReturnsComplete(idempotencyKey, selectedDocument.value.id) : V1Service.salesOrdersComplete(idempotencyKey, selectedDocument.value.id) }, onSuccess: async (response) => { selectedDocument.value = response.data; assignForm(response.data); await queryClient.invalidateQueries({ queryKey: ['sales-documents'] }); await queryClient.invalidateQueries({ queryKey: ['products'] }); await queryClient.invalidateQueries({ queryKey: ['dashboard'] }) } })
-const customerMutation = useMutation({ mutationFn: async (payload: { name: string; remark: string }) => V1Service.customersCreate(payload), onSuccess: async (response) => { form.customer_id = response.data.id; customerDialogVisible.value = false; newCustomerName.value = ''; newCustomerRemark.value = ''; await queryClient.invalidateQueries({ queryKey: ['customers'] }) } })
+const customerMutation = useMutation({ mutationFn: async (payload: CustomerWrite) => V1Service.customersCreate(payload), onSuccess: async (response) => { form.customer_id = response.data.id; customerDialogVisible.value = false; newCustomerName.value = ''; newCustomerContactName.value = ''; newCustomerPhone.value = ''; newCustomerRemark.value = ''; customerErrorMessage.value = ''; await queryClient.invalidateQueries({ queryKey: ['customers'] }) } })
 
 watch(() => route.path, (path) => { const returnMode = path.endsWith('/returns'); if (isReturnMode.value !== returnMode) { isReturnMode.value = returnMode; selectedDocument.value = null; resetForm() } })
 function switchMode(returnMode: boolean) { if (returnMode && !canCreateReturn.value) return; void router.push(returnMode ? '/sales/returns' : '/sales') }
@@ -115,11 +120,14 @@ function partnerName(name: string | null | undefined) { return name || '未指�
 function documentPayload(): SalesForm { if (!form.occurred_on || !(form.items?.length)) throw new Error('请选择业务日期并至少添加一条商品明细。'); form.items = form.items.map((item) => ({ ...item, quantity: integerQuantity(item.quantity) })); if (form.items.some((item) => !item.product_id || !(Number(item.quantity) > 0) || !(Number(item.unit_price) >= 0))) throw new Error('请填写有效的商品、数量和单价。'); if (isReturnMode.value && (!form.sales_order_id || form.items.some((item) => !item.sales_order_item_id))) throw new Error('请选择原销售单，并从原单明细填写退货数量。'); return { customer_id: form.customer_id || null, sales_order_id: form.sales_order_id, occurred_on: form.occurred_on, remark: form.remark ?? '', items: form.items } }
 function apiMessage(error: unknown) { if (error instanceof ApiError && typeof error.body === 'object' && error.body !== null && 'message' in error.body) return String(error.body.message); return error instanceof Error ? error.message : '操作未完成，请稍后重试。' }
 async function saveDraft() { try { await saveMutation.mutateAsync() } catch (error) { errorMessage.value = apiMessage(error) } }
-async function createCustomer() { if (!newCustomerName.value.trim()) { errorMessage.value = '请填写客户名称。'; return } try { await customerMutation.mutateAsync({ name: newCustomerName.value.trim(), remark: newCustomerRemark.value }) } catch (error) { errorMessage.value = apiMessage(error) } }
+async function createCustomer() { if (!newCustomerName.value.trim()) { customerErrorMessage.value = '请填写客户名称。'; return } try { await customerMutation.mutateAsync({ name: newCustomerName.value.trim(), contact_name: newCustomerContactName.value.trim(), phone: newCustomerPhone.value.trim(), remark: newCustomerRemark.value }) } catch (error) { customerErrorMessage.value = apiMessage(error) } }
 async function completeDocument() { try { await ElMessageBox.confirm(`完成后将${isReturnMode.value ? '增加' : '扣减'}库存且不可编辑，确定继续吗？`, `确认完成${isReturnMode.value ? '退货' : '销售'}`, { type: 'warning' }); await saveMutation.mutateAsync(); if (!selectedDocument.value?.id) return; await completeMutation.mutateAsync() } catch (error) { if (error !== 'cancel' && error !== 'close') errorMessage.value = apiMessage(error) } }
 async function removeDocument() { if (!selectedDocument.value?.id) return; try { await ElMessageBox.confirm('删除后会同步清理单据明细和库存流水，且无法恢复。', '确认删除单据', { type: 'warning' }); const path = isReturnMode.value ? `/sales-returns/${selectedDocument.value.id}/` : `/sales-orders/${selectedDocument.value.id}/`; await deleteDocument(path); selectedDocument.value = null; resetForm(); await queryClient.invalidateQueries({ queryKey: ['sales-documents'] }); await queryClient.invalidateQueries({ queryKey: ['products'] }); await queryClient.invalidateQueries({ queryKey: ['dashboard'] }) } catch (error) { if (error !== 'cancel' && error !== 'close') errorMessage.value = apiMessage(error) } }
 </script>
 
 <style scoped>
+.sales-panel :deep(.document-number .cell) { white-space: nowrap; }
+.sales-editor__title > span { min-width: 0; overflow-wrap: anywhere; }
+.sales-editor__title > .el-tag { flex-shrink: 0; }
 .sales-workspace { max-width: 1360px; margin: 0 auto; padding: 28px 24px 48px; }.sales-workspace__heading, .sales-workspace__actions, .sales-panel__toolbar, .sales-editor__title, .sales-editor__footer, .sales-editor__customer { display: flex; align-items: center; gap: 10px; }.sales-workspace__heading { justify-content: space-between; margin-bottom: 22px; }.sales-workspace__heading p { margin: 0 0 6px; color: #6b7780; font-size: 14px; }.sales-workspace__heading h1 { margin: 0; font-size: 28px; }.sales-workspace__alert { margin-bottom: 16px; }.sales-workspace__grid { display: grid; grid-template-columns: minmax(420px, .95fr) minmax(500px, 1.35fr); gap: 18px; }.sales-panel { min-width: 0; padding: 18px; border: 1px solid #dce5df; border-radius: 8px; background: #fff; }.sales-panel__toolbar { justify-content: space-between; margin-bottom: 14px; }.sales-panel__toolbar .el-select { width: 150px; }.sales-editor__title { justify-content: space-between; padding-bottom: 12px; font-weight: 650; }.sales-editor__details { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }.sales-editor__details .el-form-item { margin-bottom: 0; }.sales-editor__customer .el-select { min-width: 0; flex: 1; }.sales-editor__add { margin-top: 12px; }.sales-editor__footer { justify-content: space-between; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e4e9e6; }.sales-editor__footer strong { color: #176b5b; font-size: 18px; }@media (max-width: 920px) { .sales-workspace__grid { grid-template-columns: 1fr; }.sales-editor__details { grid-template-columns: 1fr; }}@media (max-width: 600px) { .sales-workspace { padding: 24px 16px 36px; }.sales-workspace__heading { align-items: flex-start; flex-direction: column; }.sales-workspace__actions { flex-wrap: wrap; }.sales-panel { padding: 14px; }.sales-editor__footer { align-items: flex-start; flex-direction: column; }}
 </style>

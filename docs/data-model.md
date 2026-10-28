@@ -47,8 +47,8 @@ erDiagram
 | `product_attribute_values` | products | `product_id`, `attribute_id`, `text_value`/`option_id` | 按属性类型二选一并 Check。 |
 | `price_levels` | partners | `organization_id`, `name`, `sort_order`, `is_active` | 默认零售价、批发价；每组织有效记录最多六个须在服务层保证。 |
 | `product_prices` | products | `product_id`, `price_level_id`, `amount` | `(product_id, price_level_id)` 唯一；`amount >= 0`。 |
-| `customers` | partners | `organization_id`, `name`, `is_active` | 最小字段待 RQ-03。 |
-| `suppliers` | partners | `organization_id`, `name`, `contact_name`, `contact_address`, `phone`, `remark`, `is_active` | 名称创建必填；其余为可选联系与辅助信息。 |
+| `customers` | partners | `organization_id`, `name`, `contact_name`, `phone`, `remark`, `is_active` | 名称创建必填；组织内按名称、联系人、电话组合唯一，允许同名和多条不同联系方式。 |
+| `suppliers` | partners | `organization_id`, `name`, `contact_name`, `contact_address`, `phone`, `remark`, `is_active` | 名称创建必填；组织内按名称、联系人、联系地址、电话组合唯一，允许同名。 |
 | `purchases`/`purchase_items` | purchases | 组织、编号、供应商、状态、完成审计；商品、数量、单价、行金额 | 单据金额由明细计算；候选状态见 DOC-001。 |
 | `purchase_returns`/`purchase_return_items` | purchases | 与采购等价结构 | 原单关联待 RQ-07。 |
 | `products` | products | 组织、名称、单位、`purchase_price`、启停与审计 | `purchase_price >= 0`；进货价用于后续完成销售/销售退货的成本快照。 |
@@ -63,10 +63,11 @@ erDiagram
 
 - 所有组织业务表以 `organization_id` 外键关联 `organizations`，使用 `PROTECT`；业务服务始终从认证用户推导组织。
 - 商品、客户、供应商、单位、规格、价格等级被单据引用时使用 `PROTECT`，通过 `is_active=false` 停用。
+- 客户唯一索引为 `(organization_id, Trim(name), Trim(contact_name), Trim(phone))`；供应商另包含 `Trim(contact_address)`，停用记录也参与唯一性检查。空字符串是有效比较值，联系字段不允许 SQL NULL；旧名称唯一限制由 `partners.0006_partner_identity_unique` 替换。迁移仅检查现有记录并调整约束，不更新、合并、删除或规范化已有业务数据。
 - 单据明细删除随草稿单据级联；完成后不得经普通 ORM/API 删除（DOC-001）。
 - `stock_movements` 对 `(organization_id, product_id, occurred_at)` 建索引用于账本查询；对 `(source_type, source_id)` 建索引用于追溯。
 - `stock_balances` 的唯一索引同时支撑锁定更新和快速库存查询。
-- 每种单据对 `(organization_id, document_no)` 建唯一索引；编号规则待确认。
+- 每种单据对 `(organization_id, document_no)` 建唯一索引；新单据使用类型前缀加北京时间 `YYYYMMDDHHmmss`，同秒重号从 `-02` 起追加序号（DOC-005~007）。沿用现有 64 字符字段及唯一约束，不新增表或迁移历史数据。
 - 所有高频列表表按 `(organization_id, created_at DESC)` 建索引；状态筛选可使用 `(organization_id, status, created_at DESC)`。
 - 数量必须大于零，库存流水的正负号必须与来源类型一致；以 Check 约束和服务校验双重保护。
 

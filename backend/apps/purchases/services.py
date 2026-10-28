@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.exceptions import APIException, ValidationError
 
 from apps.accounts.models import Organization
+from apps.common.document_numbers import save_document_with_number
 from apps.inventory.models import IdempotencyRecord, StockBalance, StockMovement
 from apps.partners.models import Supplier
 from apps.products.models import Product
@@ -130,10 +131,6 @@ def _replace_items(*, document, item_model, items: list[dict]) -> Decimal:
     return _quantize_amount(total_amount)
 
 
-def _document_no(prefix: str, document_id) -> str:
-    return f"{prefix}-{document_id.hex[:12].upper()}"
-
-
 @transaction.atomic
 def create_draft(*, model, item_model, prefix: str, organization: Organization, user, values: dict):
     supplier, items = _validate_draft_values(organization=organization, values=values)
@@ -145,8 +142,7 @@ def create_draft(*, model, item_model, prefix: str, organization: Organization, 
         created_by_user=user,
         updated_by_user=user,
     )
-    document.document_no = _document_no(prefix, document.id)
-    document.save()
+    save_document_with_number(document=document, prefix=prefix)
     document.total_amount = _replace_items(document=document, item_model=item_model, items=items)
     document.save(update_fields=["total_amount", "updated_at"])
     return document
@@ -349,8 +345,7 @@ def create_purchase_return(*, organization: Organization, user, values: dict) ->
         created_by_user=user,
         updated_by_user=user,
     )
-    document.document_no = _document_no("PR", document.id)
-    document.save()
+    save_document_with_number(document=document, prefix="PR")
     document.total_amount = _replace_items(document=document, item_model=PurchaseReturnItem, items=items)
     document.save(update_fields=["total_amount", "updated_at"])
     return document

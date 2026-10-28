@@ -13,6 +13,10 @@
           <el-input v-model="search" clearable placeholder="搜索客户名称" @keyup.enter="customersQuery.refetch()" />
           <el-select v-model="activeFilter" aria-label="客户状态筛选"><el-option label="全部状态" value="" /><el-option label="仅启用" value="true" /><el-option label="仅停用" value="false" /></el-select>
           <el-button :icon="Refresh" circle title="刷新客户列表" @click="customersQuery.refetch()" />
+          <el-select v-model="sortOrder" class="list-sort-select" aria-label="客户排序方式">
+            <el-option v-for="option in listSortOptions" :key="option.value" :label="option.label" :value="option.value" />
+          </el-select>
+          <span class="list-sort-help">{{ listSortHelpText }}</span>
         </div>
         <el-table v-loading="customersQuery.isLoading.value" :data="customers" empty-text="暂无客户">
           <el-table-column prop="name" label="客户名称" min-width="160" />
@@ -35,6 +39,7 @@
     </el-tabs>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="min(460px, 94vw)" destroy-on-close>
+      <el-alert v-if="activeTab === 'customers' && errorMessage" class="partner-workspace__alert" type="error" :title="errorMessage" show-icon @close="errorMessage = ''" />
       <el-form label-position="top">
         <el-form-item :label="activeTab === 'customers' ? '客户名称' : '等级名称'" required><el-input v-model="form.name" :maxlength="activeTab === 'customers' ? 150 : 50" /></el-form-item>
         <template v-if="activeTab === 'customers'"><el-form-item label="联系人"><el-input v-model="form.contact_name" maxlength="100" /></el-form-item><el-form-item label="电话"><el-input v-model="form.phone" maxlength="50" /></el-form-item><el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="3" /></el-form-item></template>
@@ -55,6 +60,8 @@ import { ApiError, V1Service } from '../../api/generated'
 import type { Customer, CustomerWrite, PriceLevel, PriceLevelWrite } from '../../api/generated'
 import { fetchAllPages } from '../../api/pagination'
 import { useAuthStore } from '../../stores/auth'
+import { listSortHelpText, listSortOptions, sortRecords } from '../../utils/listSorting'
+import { useListSorting } from '../../composables/useListSorting'
 
 type PartnerForm = {
   name: string
@@ -72,6 +79,7 @@ const activeTab = ref<'customers' | 'price-levels'>(route.path === '/price-level
 const search = ref('')
 const activeFilter = ref('true')
 const errorMessage = ref('')
+const { sortOrder } = useListSorting('customers', () => auth.user, (message) => { errorMessage.value = message })
 const dialogVisible = ref(false)
 const editingId = ref<string | null>(null)
 const form = reactive<PartnerForm>(emptyForm())
@@ -80,7 +88,7 @@ const canManagePrices = computed(() => auth.user?.permissions.includes('*') || a
 const dialogTitle = computed(() => `${editingId.value ? '编辑' : '新增'}${activeTab.value === 'customers' ? '客户' : '价格等级'}`)
 const customersQuery = useQuery({ queryKey: computed(() => ['customers', search.value, activeFilter.value]), queryFn: () => fetchAllPages((page, pageSize) => V1Service.customersList(activeFilter.value === '' ? undefined : activeFilter.value === 'true', page, pageSize, search.value || undefined)), retry: false })
 const priceLevelsQuery = useQuery({ queryKey: ['price-levels'], queryFn: () => fetchAllPages((page, pageSize) => V1Service.priceLevelsList(page, pageSize)), retry: false })
-const customers = computed<Customer[]>(() => customersQuery.data.value ?? [])
+const customers = computed<Customer[]>(() => sortRecords(customersQuery.data.value ?? [], sortOrder.value))
 const priceLevels = computed<PriceLevel[]>(() => priceLevelsQuery.data.value ?? [])
 const saveMutation = useMutation({ mutationFn: async () => activeTab.value === 'customers' ? saveCustomer() : savePriceLevel(), onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: activeTab.value === 'customers' ? ['customers'] : ['price-levels'] }); dialogVisible.value = false } })
 
@@ -91,7 +99,7 @@ watch(activeTab, (tab) => {
 })
 function emptyForm(): PartnerForm { return { name: '', contact_name: '', phone: '', remark: '', sort_order: 0 } }
 function resetForm() { Object.assign(form, emptyForm()) }
-function openDialog(item?: Customer | PriceLevel) { resetForm(); editingId.value = item?.id ?? null; if (item) { form.name = item.name ?? ''; if ('contact_name' in item) { form.contact_name = item.contact_name ?? ''; form.phone = item.phone ?? ''; form.remark = item.remark ?? '' } else if ('sort_order' in item) form.sort_order = item.sort_order ?? 0 } else if (activeTab.value === 'price-levels') form.sort_order = priceLevels.value.length; dialogVisible.value = true }
+function openDialog(item?: Customer | PriceLevel) { if (activeTab.value === 'customers') errorMessage.value = ''; resetForm(); editingId.value = item?.id ?? null; if (item) { form.name = item.name ?? ''; if ('contact_name' in item) { form.contact_name = item.contact_name ?? ''; form.phone = item.phone ?? ''; form.remark = item.remark ?? '' } else if ('sort_order' in item) form.sort_order = item.sort_order ?? 0 } else if (activeTab.value === 'price-levels') form.sort_order = priceLevels.value.length; dialogVisible.value = true }
 function apiMessage(error: unknown) { if (error instanceof ApiError && typeof error.body === 'object' && error.body !== null && 'message' in error.body) return String(error.body.message); return error instanceof Error ? error.message : '操作未完成，请检查输入或稍后重试。' }
 function saveCustomer() { const payload: CustomerWrite = { name: form.name.trim(), contact_name: form.contact_name, phone: form.phone, remark: form.remark }; return editingId.value ? V1Service.customersPartialUpdate(editingId.value, payload) : V1Service.customersCreate(payload) }
 function savePriceLevel() { const payload: PriceLevelWrite = { name: form.name.trim(), sort_order: form.sort_order }; return editingId.value ? V1Service.priceLevelsPartialUpdate(editingId.value, payload) : V1Service.priceLevelsCreate(payload) }
@@ -104,5 +112,8 @@ async function runConfirmed(message: string, action: () => Promise<unknown>, que
 </script>
 
 <style scoped>
+.list-sort-help { color: #6b7780; font-size: 12px; }
+.partner-workspace__toolbar { flex-wrap: wrap; }
+.partner-workspace__toolbar .el-select.list-sort-select { width: 200px; }
 .partner-workspace { max-width: 1180px; margin: 0 auto; padding: 28px 24px 48px; }.partner-workspace__heading, .partner-workspace__toolbar { display: flex; align-items: center; gap: 12px; }.partner-workspace__heading { justify-content: space-between; margin-bottom: 24px; }.partner-workspace__heading p { margin: 0 0 6px; color: #6b7780; font-size: 14px; }.partner-workspace__heading h1 { margin: 0; font-size: 28px; }.partner-workspace__alert { margin-bottom: 16px; }.partner-workspace__toolbar { margin-bottom: 16px; }.partner-workspace__toolbar .el-input { width: 280px; }.partner-workspace__toolbar .el-select { width: 130px; } @media (max-width: 600px) { .partner-workspace { padding: 24px 16px 36px; }.partner-workspace__heading { align-items: flex-start; }.partner-workspace__toolbar { flex-wrap: wrap; }.partner-workspace__toolbar .el-input { width: calc(100% - 52px); } }
 </style>
