@@ -40,7 +40,7 @@ notepad .env
 | `DATABASE_NAME`、`DATABASE_USER` | `grindbuddy`、`grindbuddy_app` | 仅首次部署前按组织运维规范需要调整命名时修改。 |
 | `PASSWORD_RESET_URL`、`DEFAULT_FROM_EMAIL`、`EMAIL_*` | 无 | 启用密码找回时必须配置可用 SMTP；重置链接应为用户可访问的 HTTPS 地址，SMTP 密码不得提交。 |
 
-`.env` 是本机机密文件，不得提交、共享或复制至其他环境。系统的数据库密码不需要填入 `backend/.env`；Compose 会将根 `.env` 注入后端容器。
+`.env` 是本机机密文件，不得提交、公开共享或复制至无关环境。同一生产环境整机迁移时，应通过受控加密通道将原配置移交目标机，保留数据库密码与 Django 密钥，并单独调整访问地址；详见 [阿里云迁移评估与方案](migration-to-aliyun.md)。系统的数据库密码不需要填入 `backend/.env`；Compose 会将根 `.env` 注入后端容器。
 
 系统不使用超级账号。首次启用时，访问登录页并注册老板账号；每个老板账号独立管理自己的店铺和员工。
 
